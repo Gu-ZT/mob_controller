@@ -24,7 +24,7 @@ import net.minecraft.world.entity.monster.piglin.Piglin;
 import net.minecraft.world.entity.monster.piglin.PiglinBrute;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.InputEvent;
@@ -418,41 +418,48 @@ public class MobControllerEvent {
             if (mode != null) {
                 NetWorkManager.INSTANCE.sendToServer(new ApplyControlCommandPacket(mode));
             }
-            return;
-        }
-
-        if (event.getButton() == InputConstants.MOUSE_BUTTON_RIGHT
-            && mc.hitResult instanceof EntityHitResult entityHitResult
-            && entityHitResult.getEntity() instanceof Mob mob
-            && !mc.player.getMainHandItem().is(ModItems.MOB_CONTROLLER_ITEM.get())
-            && !mc.player.getMainHandItem().is(ModItems.HEART_CONTRACT_ITEM.get())) {
-            NetWorkManager.INSTANCE.sendToServer(new ToggleControlModePacket(mob.getId()));
         }
     }
 
     /**
      * 玩家与可骑乘受控生物交互时，允许控制者直接骑乘。
      */
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onPlayerEntityInteract(PlayerInteractEvent.EntityInteract event) {
-        if (event.getTarget() instanceof Mob mob
-            && !event.getEntity().getMainHandItem().is(ModItems.MOB_CONTROLLER_ITEM.get())
-            && !event.getEntity().getMainHandItem().is(ModItems.HEART_CONTRACT_ITEM.get())) {
-            if (mob instanceof Guardian ||
-                mob instanceof Hoglin ||
-                mob instanceof Zoglin ||
-                mob instanceof Ravager ||
-                mob instanceof Cow ||
-                mob instanceof Sheep ||
-                mob instanceof Dolphin) {
-                if (MobControlledData.isControlledEntity(mob) && Objects.equals(
-                    MobControlledData.getControllerUUID(mob),
-                    event.getEntity().getUUID()
-                )) {
-                    event.getEntity().startRiding(event.getTarget());
-                }
-            }
+        ItemStack mainHandItem = event.getEntity().getMainHandItem();
+        if (
+            !(event.getTarget() instanceof Mob mob)
+            || mainHandItem.is(ModItems.MOB_CONTROLLER_ITEM.get())
+            || mainHandItem.is(ModItems.HEART_CONTRACT_ITEM.get())
+        ) {
+            return;
         }
+        if (
+            !mainHandItem.isEmpty()
+            || (
+                !(mob instanceof Guardian) &&
+                !(mob instanceof Hoglin) &&
+                !(mob instanceof Zoglin) &&
+                !(mob instanceof Ravager) &&
+                !(mob instanceof Cow) &&
+                !(mob instanceof Sheep) &&
+                !(mob instanceof Dolphin)
+            )
+        ) {
+            return;
+        }
+        if (
+            !MobControlledData.isControlledEntity(mob)
+            || !Objects.equals(
+                MobControlledData.getControllerUUID(mob),
+                event.getEntity().getUUID()
+            )
+        ) {
+            return;
+        }
+        event.getEntity().startRiding(event.getTarget());
+        event.setResult(Event.Result.ALLOW);
+        event.setCanceled(true);
     }
 
     /**
