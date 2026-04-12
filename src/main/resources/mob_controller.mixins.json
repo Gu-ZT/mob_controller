@@ -27,6 +27,7 @@
     "MixinPiglin",
     "MixinPiglinBruteSpecificSensor",
     "MixinPiglinSpecificSensor",
+    "PiglinAiMixin",
     "MixinRaider",
     "MixinSlimeMoveControl",
     "MixinSlimeRandomDirectionGoal",

@@ -23,6 +23,8 @@ import net.minecraft.world.entity.monster.Blaze;
 import net.minecraft.world.entity.monster.Ghast;
 import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.entity.monster.Vex;
+import net.minecraft.world.entity.monster.piglin.Piglin;
+import net.minecraft.world.entity.monster.piglin.PiglinBrute;
 import net.minecraft.world.entity.monster.warden.AngerLevel;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.player.Player;
@@ -344,6 +346,11 @@ public class MobControlUtil {
 
         // 目标是否是控制者
         if (target.equals(controller)) {
+            return false;
+        }
+
+        // 受控猪灵/蛮兵对玩家保持中立。
+        if ((controlledMob instanceof Piglin || controlledMob instanceof PiglinBrute) && target instanceof Player) {
             return false;
         }
 
