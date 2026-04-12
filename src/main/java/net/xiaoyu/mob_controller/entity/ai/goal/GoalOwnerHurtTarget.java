@@ -6,6 +6,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.OwnerHurtTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.TargetGoal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
+import net.minecraft.world.entity.player.Player;
 import net.xiaoyu.mob_controller.entity.IControllableEntity;
 
 import java.util.EnumSet;
@@ -49,6 +50,9 @@ public class GoalOwnerHurtTarget<T extends Mob & IControllableEntity> extends Ta
                 this.ownerLastHurt = livingentity.getLastHurtMob();
                 int i = livingentity.getLastHurtMobTimestamp();
                 if (this.ownerLastHurt != null) {
+                    if (this.ownerLastHurt instanceof Player) {
+                        return false;
+                    }
                     return i != this.timestamp && this.canAttack(this.ownerLastHurt, TargetingConditions.DEFAULT)
                            && this.controllableEntity.wantsToAttack(this.ownerLastHurt);
                 }

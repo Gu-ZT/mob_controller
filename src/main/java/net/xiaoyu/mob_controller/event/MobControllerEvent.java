@@ -262,7 +262,10 @@ public class MobControllerEvent {
                                 if (attacker != null) {
 
                                     if (!mob.equals(attacker) && mob.getTarget() == null) {
-                                        if (!MobControlUtil.isEnemy(mob, attacker)) {
+                                        boolean attackerIsOtherPlayer = attacker instanceof Player attackerPlayer
+                                                                        && !attackerPlayer.getUUID().equals(controllerUUID);
+                                        // 护主场景下允许反击其他玩家；其余情况仍走常规敌友判定。
+                                        if (!attackerIsOtherPlayer && !MobControlUtil.isEnemy(mob, attacker)) {
                                             continue;
                                         }
 
