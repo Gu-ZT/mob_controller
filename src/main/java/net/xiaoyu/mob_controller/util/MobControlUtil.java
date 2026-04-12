@@ -4,10 +4,19 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.locale.Language;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.*;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobType;
+import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.ambient.Bat;
 import net.minecraft.world.entity.animal.Squid;
 import net.minecraft.world.entity.monster.Blaze;
@@ -21,22 +30,43 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.xiaoyu.mob_controller.Config;
 import net.xiaoyu.mob_controller.mixin.AccessorSlimeMoveControl;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.util.Objects;
 import java.util.UUID;
+import javax.annotation.Nullable;
+
+/**
+ * 生物控制系统的通用工具类。
+ *
+ * <p>主要提供被控制生物的跟随/停留行为处理、敌友判定、目标设置，
+ * 以及向玩家发送动作栏与标题提示等能力。</p>
+ */
 
 public class MobControlUtil {
+    /**
+     * 停留模式坐标焊死数据的持久化键。
+     */
+    private static final String STAY_WELD_TAG = "mob_controller:stay_weld";
+    private static final String STAY_WELD_X = "x";
+    private static final String STAY_WELD_Y = "y";
+    private static final String STAY_WELD_Z = "z";
+
+    /**
+     * 在每刻中处理被控制生物的跟随逻辑。
+     *
+     * <p>包含不同生物类型的差异化移动控制，以及距离过远时的安全传送。</p>
+     *
+     * @param mob 被控制生物
+     */
     public static void handleMobFollowing(Mob mob) {
 
         if (MobControlledData.isControlledEntity(mob)) {
             Player controller = MobControlledData.getController(mob, mob.level());
 
             if (controller != null && !controller.isSpectator()) {
-                mob.getLookControl().setLookAt(controller, 10.0F, (float) mob.getMaxHeadXRot());
-
                 double distanceSq = controller.distanceToSqr(mob);
 
                 // 跟随
@@ -78,15 +108,15 @@ public class MobControlUtil {
                     } else if (mob instanceof Squid squid) {
                         // 鱿鱼
                         Vec3 direction = new Vec3(
-                                controller.getX() - mob.getX(),
-                                controller.getY() - mob.getY(),
-                                controller.getZ() - mob.getZ()
+                            controller.getX() - mob.getX(),
+                            controller.getY() - mob.getY(),
+                            controller.getZ() - mob.getZ()
                         ).normalize();
 
                         squid.setMovementVector(
-                                (float) (direction.x * 0.2F),
-                                (float) (direction.y * 0.2F),
-                                (float) (direction.z * 0.2F)
+                            (float) (direction.x * 0.2F),
+                            (float) (direction.y * 0.2F),
+                            (float) (direction.z * 0.2F)
                         );
                     } else if (mob instanceof Bat bat) {
                         // 蝙蝠
@@ -99,11 +129,13 @@ public class MobControlUtil {
                             Field targetPositionField = Bat.class.getDeclaredField("targetPosition");
                             targetPositionField.setAccessible(true);
 
-                            targetPositionField.set(bat, new BlockPos(
+                            targetPositionField.set(
+                                bat, new BlockPos(
                                     (int) controller.getX(),
                                     (int) controller.getY() + 2,
                                     (int) controller.getZ()
-                            ));
+                                )
+                            );
                         } catch (Exception ignored) {
                         }
                     }/*  else if (mob instanceof Bee) {
@@ -118,10 +150,9 @@ public class MobControlUtil {
                         } catch (Exception e) {}
                     } */ else {
                         // 一般的生物...
-                        mob.lookAt(controller, 10.0F, 10.0F);
                         mob.getNavigation().moveTo(controller, 1.0D);
                         if (mob.getMoveControl() instanceof AccessorSlimeMoveControl slimeMoveControl) {
-                            slimeMoveControl.mob_controller$setDirection(mob.getYRot(), true);
+                            slimeMoveControl.mob_controller$setDirection(getYawTowards(mob, controller), true);
                         }
                     }
 
@@ -166,6 +197,62 @@ public class MobControlUtil {
         }
     }
 
+    private static float getYawTowards(Entity source, Entity target) {
+        double dx = target.getX() - source.getX();
+        double dz = target.getZ() - source.getZ();
+        return (float) (Mth.atan2(dz, dx) * (180.0F / (float) Math.PI)) - 90.0F;
+    }
+
+    /**
+     * 判断当前生物在“停留”模式下是否需要应用飞行坐标焊死。
+     *
+     * @param mob 生物实体
+     * @return 若命中配置白名单则返回 {@code true}
+     */
+    public static boolean shouldUseStayFlightWeld(Mob mob) {
+        String entityId = EntityType.getKey(mob.getType()).toString();
+        return Config.STAY_WELDED_SPECIAL_AI_MOBS.get().contains(entityId);
+    }
+
+    /**
+     * 对飞行/特殊 AI 生物应用停留坐标焊死。
+     *
+     * <p>首次调用会记录当前位置，后续每次强制瞬移回记录坐标并清空速度。</p>
+     *
+     * @param mob 生物实体
+     */
+    public static void applyStayFlightCoordinateWeld(Mob mob) {
+        if (mob.getVehicle() != null) {
+            return;
+        }
+
+        CompoundTag persistentData = mob.getPersistentData();
+        CompoundTag stayWeldData;
+        if (persistentData.contains(STAY_WELD_TAG, CompoundTag.TAG_COMPOUND)) {
+            stayWeldData = persistentData.getCompound(STAY_WELD_TAG);
+        } else {
+            stayWeldData = new CompoundTag();
+            stayWeldData.putDouble(STAY_WELD_X, mob.getX());
+            stayWeldData.putDouble(STAY_WELD_Y, mob.getY());
+            stayWeldData.putDouble(STAY_WELD_Z, mob.getZ());
+            persistentData.put(STAY_WELD_TAG, stayWeldData);
+        }
+
+        mob.setDeltaMovement(Vec3.ZERO);
+        mob.hasImpulse = true;
+        mob.fallDistance = 0;
+        mob.teleportTo(stayWeldData.getDouble(STAY_WELD_X), stayWeldData.getDouble(STAY_WELD_Y), stayWeldData.getDouble(STAY_WELD_Z));
+    }
+
+    /**
+     * 清除生物的停留坐标焊死数据。
+     *
+     * @param mob 生物实体
+     */
+    public static void clearStayFlightCoordinateWeld(Mob mob) {
+        mob.getPersistentData().remove(STAY_WELD_TAG);
+    }
+
     private static void teleportMob(Mob mob, BlockPos pos) {
         mob.teleportTo(pos.getX(), pos.getY(), pos.getZ());
         mob.getNavigation().stop();
@@ -174,8 +261,8 @@ public class MobControlUtil {
     private static boolean isControllerFullySubmerged(Player controller) {
         // 控制者头部/身体是否完全在水中
         return controller.isInWater() &&
-                controller.level().getFluidState(controller.blockPosition()).getType().equals(Fluids.WATER) &&
-                controller.level().getFluidState(controller.blockPosition().above()).getType().equals(Fluids.WATER);
+               controller.level().getFluidState(controller.blockPosition()).getType().equals(Fluids.WATER) &&
+               controller.level().getFluidState(controller.blockPosition().above()).getType().equals(Fluids.WATER);
     }
 
     @Nullable
@@ -196,9 +283,9 @@ public class MobControlUtil {
                             BlockPos upperPos = checkPos.above();
                             if (mob.level().getFluidState(upperPos).getType().equals(Fluids.WATER)) {
                                 AABB targetAABB = mobAABB.move(
-                                        checkPos.getX() - mobAABB.minX,
-                                        checkPos.getY() - mobAABB.minY,
-                                        checkPos.getZ() - mobAABB.minZ
+                                    checkPos.getX() - mobAABB.minX,
+                                    checkPos.getY() - mobAABB.minY,
+                                    checkPos.getZ() - mobAABB.minZ
                                 );
 
                                 if (mob.level().noCollision(mob, targetAABB)) {
@@ -215,9 +302,9 @@ public class MobControlUtil {
 
                             if (groundState.isFaceSturdy(mob.level(), groundPos, Direction.UP)) {
                                 AABB targetAABB = mobAABB.move(
-                                        checkPos.getX() - mobAABB.minX,
-                                        checkPos.getY() - mobAABB.minY,
-                                        checkPos.getZ() - mobAABB.minZ
+                                    checkPos.getX() - mobAABB.minX,
+                                    checkPos.getY() - mobAABB.minY,
+                                    checkPos.getZ() - mobAABB.minZ
                                 );
 
                                 if (mob.level().noCollision(mob, targetAABB)) {
@@ -233,6 +320,13 @@ public class MobControlUtil {
         return null;
     }
 
+    /**
+     * 判定目标是否应被视为被控制生物的敌对对象。
+     *
+     * @param controlledMob 被控制生物
+     * @param target        目标实体，可为 {@code null}
+     * @return {@code true} 表示可视为敌对目标
+     */
     public static boolean isEnemy(LivingEntity controlledMob, @Nullable Entity target) {
         if (target == null) {
             return false;
@@ -241,7 +335,7 @@ public class MobControlUtil {
             return false;
         }
         if (target instanceof LivingEntity mob && MobControlledData.isControlledEntity(mob)
-                && Objects.equals(MobControlledData.getControllerUUID(controlledMob), MobControlledData.getControllerUUID(mob))) {
+            && Objects.equals(MobControlledData.getControllerUUID(controlledMob), MobControlledData.getControllerUUID(mob))) {
             return false;
         }
 
@@ -280,7 +374,12 @@ public class MobControlUtil {
         return true;
     }
 
-    // 坚守者一些攻击
+    /**
+     * 设置生物攻击目标，并兼容监守者的愤怒系统。
+     *
+     * @param mob    发起攻击的生物
+     * @param target 目标实体
+     */
     public static void setMobTargetWithAnger(Mob mob, LivingEntity target) {
         if (mob instanceof Warden warden) {
             warden.increaseAngerAt(target, AngerLevel.ANGRY.getMinimumAnger() + 20, false);
@@ -290,7 +389,15 @@ public class MobControlUtil {
         }
     }
 
-    // 一些乱七八糟的文本...
+    /**
+     * 向玩家发送着色后的动作栏提示文本。
+     *
+     * @param player         目标玩家
+     * @param prefix         前缀文本，可为空字符串
+     * @param translationKey 语言键
+     * @param args           格式化参数
+     * @param color          文本颜色
+     */
     public static void showMessageToPlayer(Player player, String prefix, String translationKey, Object[] args, ChatFormatting color) {
         if (player instanceof ServerPlayer serverPlayer) {
             String text = Language.getInstance().getOrDefault(translationKey);
@@ -301,6 +408,27 @@ public class MobControlUtil {
             Component message = Component.literal(messageText).setStyle(Style.EMPTY.withColor(color));
 
             serverPlayer.sendSystemMessage(message, true);
+        }
+    }
+
+    /**
+     * 向玩家显示“控制模式切换”标题提示。
+     *
+     * @param player             目标玩家
+     * @param mobName            生物显示名组件
+     * @param modeTranslationKey 模式翻译键
+     * @param color              标题颜色
+     */
+    public static void showControlModeTitle(Player player, Component mobName, String modeTranslationKey, ChatFormatting color) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            Component title = Component.translatable(
+                "mob_controller.title.control_mode",
+                mobName,
+                Component.translatable(modeTranslationKey)
+            ).setStyle(Style.EMPTY.withColor(color));
+
+            serverPlayer.connection.send(new ClientboundSetTitlesAnimationPacket(5, 30, 10));
+            serverPlayer.connection.send(new ClientboundSetTitleTextPacket(title));
         }
     }
 }

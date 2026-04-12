@@ -20,6 +20,8 @@
     "MixinLivingEntity",
     "MixinMob",
     "MixinMobEffectUtil",
+    "MixinMonster",
+    "MixinWardenAi",
     "MixinNearestAttackableTargetGoal",
     "MixinPathNavigation",
     "MixinPiglin",
