@@ -261,16 +261,17 @@ public class MobControllerEvent {
                                 LivingEntity attacker = getResponsibleLivingEntity(event.getSource().getEntity());
                                 if (attacker != null) {
 
-                                    if (!mob.equals(attacker) && mob.getTarget() == null) {
-                                        boolean attackerIsOtherPlayer = attacker instanceof Player attackerPlayer
-                                                                        && !attackerPlayer.getUUID().equals(controllerUUID);
+                                    boolean attackerIsOtherPlayer = attacker instanceof Player attackerPlayer
+                                                                    && !attackerPlayer.getUUID().equals(controllerUUID);
+
+                                    // 其他玩家攻击主人时，允许优先切换为护主目标。
+                                    if (!mob.equals(attacker) && (mob.getTarget() == null || attackerIsOtherPlayer)) {
                                         // 护主场景下允许反击其他玩家；其余情况仍走常规敌友判定。
                                         if (!attackerIsOtherPlayer && !MobControlUtil.isEnemy(mob, attacker)) {
                                             continue;
                                         }
 
                                         MobControlledData.markCombat(mob);
-
                                         MobControlledData.markSystemAttack(mob);
 
                                         // 疣猪兽/僵尸疣猪兽用ATTACK_TARGET内存模块
@@ -468,7 +469,9 @@ public class MobControllerEvent {
     @SubscribeEvent
     public static void onLivingChangeTargetEvent(LivingChangeTargetEvent event) {
         if (event.getEntity() instanceof Mob mob && event.getNewTarget() != null) {
-            if (MobControlledData.isControlledEntity(mob) && !MobControlUtil.isEnemy(mob, event.getNewTarget())) {
+            if (MobControlledData.isControlledEntity(mob)
+                && !MobControlledData.isSystemAttack(mob)
+                && !MobControlUtil.isEnemy(mob, event.getNewTarget())) {
                 if (!(mob instanceof EntityControlledWitch)) {
                     event.setCanceled(true);
                 }

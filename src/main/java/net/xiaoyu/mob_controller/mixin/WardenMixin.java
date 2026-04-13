@@ -4,7 +4,6 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.player.Player;
 import net.xiaoyu.mob_controller.util.MobControlUtil;
@@ -63,8 +62,7 @@ public class WardenMixin {
     private void ignoreVibrationAngerWhenControlled(@Nullable Entity entity, int offset, boolean playListeningSound, CallbackInfo ci) {
         Warden warden = (Warden) (Object) this;
         if (MobControlledData.isControlledEntity(warden)
-            && playListeningSound
-            && warden.getBrain().hasMemoryValue(MemoryModuleType.VIBRATION_COOLDOWN)) {
+            && playListeningSound) {
             ci.cancel();
         }
     }
