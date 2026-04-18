@@ -49,6 +49,9 @@ abstract class PlayerMixin extends Entity {
         if (!(entityToInteractOn instanceof Mob mob)) return;
         InteractionResult returnValue = cir.getReturnValue();
         if (returnValue != InteractionResult.PASS && returnValue != InteractionResult.FAIL) return;
+        Player player = (Player) (Object) this;
+        // 手持生物控制器时不允许切换模式（控制器仅用于驯服，不负责指令）
+        if (player.getItemInHand(hand).getItem() instanceof MobControllerItem) return;
         if (
             !MobControlledData.isControlledEntity(mob)
             || !Objects.equals(
@@ -58,7 +61,7 @@ abstract class PlayerMixin extends Entity {
         ) {
             return;
         }
-        if (MobControlUtil.isDirectRideableControlledMob(mob) && !((Player) (Object) this).isShiftKeyDown()) {
+        if (MobControlUtil.isDirectRideableControlledMob(mob) && !player.isShiftKeyDown()) {
             return;
         }
         NetWorkManager.INSTANCE.sendToServer(new ToggleControlModePacket(mob.getId()));
