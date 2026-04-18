@@ -8,13 +8,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.Dolphin;
-import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.monster.Guardian;
-import net.minecraft.world.entity.monster.Ravager;
-import net.minecraft.world.entity.monster.Zoglin;
-import net.minecraft.world.entity.monster.hoglin.Hoglin;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
@@ -115,13 +110,7 @@ public abstract class MixinLivingEntity extends Entity {
     private void injectTickRidden(Player player, Vec3 travelVector, CallbackInfo ci) {
         Object thiz = this;
         if (thiz instanceof LivingEntity mob) {
-            if (mob instanceof Guardian ||
-                mob instanceof Hoglin ||
-                mob instanceof Zoglin ||
-                mob instanceof Ravager ||
-                mob instanceof Cow ||
-                mob instanceof Sheep ||
-                mob instanceof Dolphin) {
+            if (mob instanceof Mob livingMob && MobControlUtil.isDirectRideableControlledMob(livingMob)) {
                 this.setRot(player.getYRot(), player.getXRot() * 0.5F);
                 this.yRotO = this.yBodyRot = this.yHeadRot = this.getYRot();
                 if (mob instanceof Guardian && !mob.isInWaterOrBubble()) {
@@ -142,13 +131,7 @@ public abstract class MixinLivingEntity extends Entity {
     private void injectGetRiddenInput(Player player, Vec3 travelVector, CallbackInfoReturnable<Vec3> cir) {
         Object thiz = this;
         if (thiz instanceof LivingEntity mob) {
-            if (mob instanceof Guardian ||
-                mob instanceof Hoglin ||
-                mob instanceof Zoglin ||
-                mob instanceof Ravager ||
-                mob instanceof Cow ||
-                mob instanceof Sheep ||
-                mob instanceof Dolphin) {
+            if (mob instanceof Mob livingMob && MobControlUtil.isDirectRideableControlledMob(livingMob)) {
                 double x = player.xxa * 0.5;
                 double y = 0;
                 double z = player.zza;
@@ -191,12 +174,7 @@ public abstract class MixinLivingEntity extends Entity {
     private void injectGetRiddenSpeed(Player player, CallbackInfoReturnable<Float> cir) {
         Object thiz = this;
         if (thiz instanceof LivingEntity mob) {
-            if (mob instanceof Guardian ||
-                mob instanceof Hoglin ||
-                mob instanceof Zoglin ||
-                mob instanceof Ravager ||
-                mob instanceof Cow ||
-                mob instanceof Sheep) {
+            if (mob instanceof Mob livingMob && MobControlUtil.isDirectRideableControlledMob(livingMob) && !(mob instanceof Dolphin)) {
                 cir.setReturnValue((float) mob.getAttributeValue(Attributes.MOVEMENT_SPEED));
             }
             if (mob instanceof Dolphin) {

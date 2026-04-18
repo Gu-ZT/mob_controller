@@ -19,10 +19,17 @@ import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.ambient.Bat;
 import net.minecraft.world.entity.animal.Squid;
+import net.minecraft.world.entity.animal.Cow;
+import net.minecraft.world.entity.animal.Dolphin;
+import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.monster.Blaze;
 import net.minecraft.world.entity.monster.Ghast;
 import net.minecraft.world.entity.monster.Phantom;
+import net.minecraft.world.entity.monster.Guardian;
+import net.minecraft.world.entity.monster.Ravager;
 import net.minecraft.world.entity.monster.Vex;
+import net.minecraft.world.entity.monster.Zoglin;
+import net.minecraft.world.entity.monster.hoglin.Hoglin;
 import net.minecraft.world.entity.monster.warden.AngerLevel;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.player.Player;
@@ -212,6 +219,19 @@ public class MobControlUtil {
     public static boolean shouldUseStayFlightWeld(Mob mob) {
         String entityId = EntityType.getKey(mob.getType()).toString();
         return Config.STAY_WELDED_SPECIAL_AI_MOBS.get().contains(entityId);
+    }
+
+    /**
+     * 判断受控生物是否属于当前支持直接骑乘的类型。
+     */
+    public static boolean isDirectRideableControlledMob(Mob mob) {
+        return mob instanceof Guardian
+               || mob instanceof Hoglin
+               || mob instanceof Zoglin
+               || mob instanceof Ravager
+               || mob instanceof Cow
+               || mob instanceof Sheep
+               || mob instanceof Dolphin;
     }
 
     /**

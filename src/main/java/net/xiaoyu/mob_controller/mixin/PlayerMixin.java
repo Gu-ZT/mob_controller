@@ -12,6 +12,7 @@ import net.minecraft.world.level.Level;
 import net.xiaoyu.mob_controller.item.MobControllerItem;
 import net.xiaoyu.mob_controller.network.NetWorkManager;
 import net.xiaoyu.mob_controller.network.ToggleControlModePacket;
+import net.xiaoyu.mob_controller.util.MobControlUtil;
 import net.xiaoyu.mob_controller.util.MobControlledData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -55,6 +56,9 @@ abstract class PlayerMixin extends Entity {
                 this.getUUID()
             )
         ) {
+            return;
+        }
+        if (MobControlUtil.isDirectRideableControlledMob(mob) && !((Player) (Object) this).isShiftKeyDown()) {
             return;
         }
         NetWorkManager.INSTANCE.sendToServer(new ToggleControlModePacket(mob.getId()));

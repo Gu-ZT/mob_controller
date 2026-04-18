@@ -66,6 +66,9 @@ public class ToggleControlModePacket {
                     MobControlledData.getControllerUUID(mob),
                     player.getUUID()
                 )) {
+                    if (MobControlUtil.isDirectRideableControlledMob(mob) && !player.isShiftKeyDown()) {
+                        return;
+                    }
 
                     MobControlledData.ControlMode newMode = MobControlledData.toggleControlMode(mob);
 

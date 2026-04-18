@@ -12,11 +12,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.animal.Cow;
-import net.minecraft.world.entity.animal.Dolphin;
-import net.minecraft.world.entity.animal.Sheep;
-import net.minecraft.world.entity.monster.Guardian;
-import net.minecraft.world.entity.monster.Ravager;
 import net.minecraft.world.entity.monster.Zoglin;
 import net.minecraft.world.entity.monster.hoglin.Hoglin;
 import net.minecraft.world.entity.monster.piglin.AbstractPiglin;
@@ -435,21 +430,11 @@ public class MobControllerEvent {
             !(event.getTarget() instanceof Mob mob)
             || mainHandItem.is(ModItems.MOB_CONTROLLER_ITEM.get())
             || mainHandItem.is(ModItems.HEART_CONTRACT_ITEM.get())
+            || event.getEntity().isShiftKeyDown()
         ) {
             return;
         }
-        if (
-            !mainHandItem.isEmpty()
-            || (
-                !(mob instanceof Guardian) &&
-                !(mob instanceof Hoglin) &&
-                !(mob instanceof Zoglin) &&
-                !(mob instanceof Ravager) &&
-                !(mob instanceof Cow) &&
-                !(mob instanceof Sheep) &&
-                !(mob instanceof Dolphin)
-            )
-        ) {
+        if (!mainHandItem.isEmpty() || !MobControlUtil.isDirectRideableControlledMob(mob)) {
             return;
         }
         if (
