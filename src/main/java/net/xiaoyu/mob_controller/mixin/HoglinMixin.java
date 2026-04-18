@@ -2,6 +2,7 @@ package net.xiaoyu.mob_controller.mixin;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.hoglin.Hoglin;
+import net.minecraft.world.entity.player.Player;
 import net.xiaoyu.mob_controller.util.MobControlUtil;
 import net.xiaoyu.mob_controller.util.MobControlledData;
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,6 +24,10 @@ public class HoglinMixin {
     private void onDoHurtTarget(Entity target, CallbackInfoReturnable<Boolean> cir) {
         Hoglin hoglin = (Hoglin) (Object) this;
         if (MobControlledData.isControlledEntity(hoglin) && !MobControlUtil.isEnemy(hoglin, target)) {
+            // 允许伤害非控制者玩家（按原版逻辑）
+            if (target instanceof Player && !MobControlUtil.isController(hoglin, target)) {
+                return;
+            }
             cir.cancel();
         }
     }

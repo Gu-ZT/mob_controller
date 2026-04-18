@@ -46,9 +46,14 @@ public class WardenMixin {
 
         if (entity instanceof LivingEntity livingEntity) {
 
-            // 被控制的监守者取消对非敌对目标的攻击欲望
+            // 被控制的监守者取消对非敌对目标的攻击欲望，但允许攻击非控制者玩家
             if (MobControlledData.isControlledEntity(warden)) {
-                if (!MobControlUtil.isEnemy(warden, livingEntity)) {
+                if (entity instanceof Player) {
+                    // 只阻止攻击控制者本人，其余玩家按原版逻辑
+                    if (MobControlUtil.isController(warden, entity)) {
+                        info.setReturnValue(false);
+                    }
+                } else if (!MobControlUtil.isEnemy(warden, livingEntity)) {
                     info.setReturnValue(false);
                 }
             }

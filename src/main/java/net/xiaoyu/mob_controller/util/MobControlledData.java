@@ -25,6 +25,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.xiaoyu.mob_controller.Config;
 import net.xiaoyu.mob_controller.capability.MobControlCapability;
 import net.xiaoyu.mob_controller.capability.MobControlCapabilityProvider;
@@ -214,7 +215,7 @@ public class MobControlledData {
         if (location == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(location));
+        return Optional.ofNullable(ForgeRegistries.ENTITY_TYPES.getValue(location));
     }
 
     // 列表中移除[被控制的生物死亡]

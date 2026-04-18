@@ -475,6 +475,21 @@ public class MobControlUtil {
     }
 
     /**
+     * 判断目标实体是否为受控生物的控制者本人。
+     *
+     * @param controlledMob 受控生物
+     * @param target        候选目标，可为 {@code null}
+     * @return {@code true} 表示目标即为控制者
+     */
+    public static boolean isController(LivingEntity controlledMob, @Nullable Entity target) {
+        if (target == null || !MobControlledData.isControlledEntity(controlledMob)) {
+            return false;
+        }
+        UUID controllerUUID = MobControlledData.getControllerUUID(controlledMob);
+        return controllerUUID != null && controllerUUID.equals(target.getUUID());
+    }
+
+    /**
      * 判定目标是否允许继续作为当前战斗目标。
      */
     public static boolean canKeepCombatTarget(LivingEntity controlledMob, @Nullable LivingEntity target) {

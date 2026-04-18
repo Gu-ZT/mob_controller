@@ -81,7 +81,10 @@ public abstract class MixinLivingEntity extends Entity {
             // 系统攻击（反击/护主）时允许伤害，否则检查敌友关系
             if (mob instanceof Mob mobInstance) {
                 if (!MobControlledData.isSystemAttack(mobInstance) && !MobControlUtil.isEnemy(mob, livingEntity)) {
-                    cir.cancel();
+                    // Brain 类生物按原版逻辑攻击玩家，仅阻止伤害控制者本人
+                    if (!(livingEntity instanceof Player) || MobControlUtil.isController(mob, livingEntity)) {
+                        cir.cancel();
+                    }
                 }
             } else if (!MobControlUtil.isEnemy(mob, livingEntity)) {
                 cir.cancel();

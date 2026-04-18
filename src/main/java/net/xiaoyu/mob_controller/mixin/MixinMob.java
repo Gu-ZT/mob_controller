@@ -7,8 +7,10 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.Targeting;
 import net.minecraft.world.entity.monster.Guardian;
 import net.minecraft.world.entity.monster.Skeleton;
+import net.minecraft.world.entity.monster.Zoglin;
 import net.minecraft.world.entity.monster.hoglin.Hoglin;
 import net.minecraft.world.entity.monster.piglin.AbstractPiglin;
+import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.xiaoyu.mob_controller.entity.IControllableEntity;
@@ -79,6 +81,16 @@ public abstract class MixinMob extends LivingEntity implements Targeting {
         Mob mob = (Mob) (Object) this;
 
         if (MobControlledData.isControlledEntity(mob)) {
+            // Brain 类生物（Piglin / Hoglin / Zoglin / Warden）按原版逻辑攻击玩家，
+            // 仅阻止攻击控制者本人。
+            if (mob instanceof AbstractPiglin || mob instanceof Hoglin
+                    || mob instanceof Zoglin || mob instanceof Warden) {
+                if (target instanceof Player && MobControlUtil.isController(mob, target)) {
+                    ci.cancel();
+                }
+                return;
+            }
+
             if (target instanceof Player
                 && !MobControlUtil.canKeepCombatTarget(mob, target)) {
                 ci.cancel();

@@ -6,6 +6,7 @@ import net.minecraft.world.entity.ai.behavior.BehaviorUtils;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.monster.piglin.Piglin;
 import net.minecraft.world.entity.monster.piglin.PiglinAi;
+import net.minecraft.world.entity.player.Player;
 import net.xiaoyu.mob_controller.util.MobControlUtil;
 import net.xiaoyu.mob_controller.util.MobControlledData;
 import org.spongepowered.asm.mixin.Mixin;
@@ -30,13 +31,21 @@ public class PiglinAiMixin {
 
         Brain<Piglin> brain = piglin.getBrain();
         Optional<LivingEntity> angerTarget = BehaviorUtils.getLivingEntityFromUUIDMemory(piglin, MemoryModuleType.ANGRY_AT);
-        if (angerTarget.isPresent() && !MobControlUtil.canKeepCombatTarget(piglin, angerTarget.get())) {
-            brain.eraseMemory(MemoryModuleType.ANGRY_AT);
+        if (angerTarget.isPresent()) {
+            LivingEntity t = angerTarget.get();
+            boolean shouldErase = t instanceof Player
+                    ? MobControlUtil.isController(piglin, t)
+                    : !MobControlUtil.canKeepCombatTarget(piglin, t);
+            if (shouldErase) brain.eraseMemory(MemoryModuleType.ANGRY_AT);
         }
 
         Optional<? extends LivingEntity> attackTarget = brain.getMemory(MemoryModuleType.ATTACK_TARGET);
-        if (attackTarget.isPresent() && !MobControlUtil.canKeepCombatTarget(piglin, attackTarget.get())) {
-            brain.eraseMemory(MemoryModuleType.ATTACK_TARGET);
+        if (attackTarget.isPresent()) {
+            LivingEntity t = attackTarget.get();
+            boolean shouldErase = t instanceof Player
+                    ? MobControlUtil.isController(piglin, t)
+                    : !MobControlUtil.canKeepCombatTarget(piglin, t);
+            if (shouldErase) brain.eraseMemory(MemoryModuleType.ATTACK_TARGET);
         }
 
         Optional<? extends LivingEntity> nearestVisibleNemesis = brain.getMemory(MemoryModuleType.NEAREST_VISIBLE_NEMESIS);
@@ -44,7 +53,9 @@ public class PiglinAiMixin {
             brain.eraseMemory(MemoryModuleType.NEAREST_VISIBLE_NEMESIS);
         }
 
-        if (brain.hasMemoryValue(MemoryModuleType.NEAREST_VISIBLE_ATTACKABLE_PLAYER)) {
+        // 只移除控制者本人对应的可攻击玩家记忆，其余玩家按原版逻辑保留
+        Optional<Player> attackablePlayer = brain.getMemory(MemoryModuleType.NEAREST_VISIBLE_ATTACKABLE_PLAYER);
+        if (attackablePlayer.isPresent() && MobControlUtil.isController(piglin, attackablePlayer.get())) {
             brain.eraseMemory(MemoryModuleType.NEAREST_VISIBLE_ATTACKABLE_PLAYER);
         }
     }
@@ -56,8 +67,16 @@ public class PiglinAiMixin {
         }
 
         Optional<? extends LivingEntity> result = cir.getReturnValue();
-        if (result.isPresent() && !MobControlUtil.canKeepCombatTarget(piglin, result.get())) {
-            cir.setReturnValue(Optional.empty());
+        if (result.isPresent()) {
+            LivingEntity target = result.get();
+            if (target instanceof Player) {
+                // 只过滤控制者本人，其余玩家按原版逻辑保留
+                if (MobControlUtil.isController(piglin, target)) {
+                    cir.setReturnValue(Optional.empty());
+                }
+            } else if (!MobControlUtil.canKeepCombatTarget(piglin, target)) {
+                cir.setReturnValue(Optional.empty());
+            }
         }
     }
 }
