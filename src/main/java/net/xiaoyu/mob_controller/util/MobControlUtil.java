@@ -23,8 +23,6 @@ import net.minecraft.world.entity.monster.Blaze;
 import net.minecraft.world.entity.monster.Ghast;
 import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.entity.monster.Vex;
-import net.minecraft.world.entity.monster.piglin.Piglin;
-import net.minecraft.world.entity.monster.piglin.PiglinBrute;
 import net.minecraft.world.entity.monster.warden.AngerLevel;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.player.Player;
@@ -349,8 +347,8 @@ public class MobControlUtil {
             return false;
         }
 
-        // 受控猪灵/蛮兵对玩家保持中立。
-        if ((controlledMob instanceof Piglin || controlledMob instanceof PiglinBrute) && target instanceof Player) {
+        // 受控生物默认不主动敌对玩家，玩家仅能走防御反击链路。
+        if (target instanceof Player) {
             return false;
         }
 
@@ -379,6 +377,67 @@ public class MobControlUtil {
         }*/
 
         return true;
+    }
+
+    /**
+     * 判定目标是否可作为受控生物的“防御反击”对象。
+     */
+    public static boolean canRetaliateAgainst(LivingEntity controlledMob, @Nullable LivingEntity target) {
+        if (target == null) {
+            return false;
+        }
+        if (isEnemy(controlledMob, target)) {
+            return true;
+        }
+        if (!(target instanceof Player player)) {
+            return false;
+        }
+        if (!MobControlledData.isControlledEntity(controlledMob)) {
+            return false;
+        }
+
+        UUID controllerUUID = MobControlledData.getControllerUUID(controlledMob);
+        if (controllerUUID == null
+            || controllerUUID.equals(player.getUUID())
+            || player.isCreative()
+            || player.isSpectator()) {
+            return false;
+        }
+
+        if (player.equals(controlledMob.getLastHurtByMob())) {
+            return true;
+        }
+
+        Player controller = MobControlledData.getController(controlledMob, controlledMob.level());
+        return controller != null && player.equals(controller.getLastHurtByMob());
+    }
+
+    /**
+     * 用于攻击事件上下文：攻击者已知时允许立即进入反击。
+     */
+    public static boolean canRetaliateAgainstImmediateAttacker(LivingEntity controlledMob, @Nullable LivingEntity attacker) {
+        if (!(attacker instanceof Player player)) {
+            return canRetaliateAgainst(controlledMob, attacker);
+        }
+        if (!MobControlledData.isControlledEntity(controlledMob)) {
+            return false;
+        }
+
+        UUID controllerUUID = MobControlledData.getControllerUUID(controlledMob);
+        return controllerUUID != null
+               && !controllerUUID.equals(player.getUUID())
+               && !player.isCreative()
+               && !player.isSpectator();
+    }
+
+    /**
+     * 判定目标是否允许继续作为当前战斗目标。
+     */
+    public static boolean canKeepCombatTarget(LivingEntity controlledMob, @Nullable LivingEntity target) {
+        return isEnemy(controlledMob, target)
+               || (controlledMob instanceof Mob mob
+                   && MobControlledData.isSystemAttack(mob)
+                   && canRetaliateAgainst(controlledMob, target));
     }
 
     /**

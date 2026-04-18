@@ -213,9 +213,11 @@ public class MobControllerEvent {
 
                     // 被控制的生物攻击攻击者[攻击者不是控制者]
                     if (!isController) {
-                        if (!MobControlUtil.isEnemy(mob, attacker)) {
+                        if (!MobControlUtil.canRetaliateAgainstImmediateAttacker(mob, attacker)) {
                             return;
                         }
+
+                        mob.setLastHurtByMob(attacker);
 
                         MobControlledData.markCombat(mob);
 
@@ -266,10 +268,11 @@ public class MobControllerEvent {
 
                                     // 其他玩家攻击主人时，允许优先切换为护主目标。
                                     if (!mob.equals(attacker) && (mob.getTarget() == null || attackerIsOtherPlayer)) {
-                                        // 护主场景下允许反击其他玩家；其余情况仍走常规敌友判定。
-                                        if (!attackerIsOtherPlayer && !MobControlUtil.isEnemy(mob, attacker)) {
+                                        if (!MobControlUtil.canRetaliateAgainstImmediateAttacker(mob, attacker)) {
                                             continue;
                                         }
+
+                                        player.setLastHurtByMob(attacker);
 
                                         MobControlledData.markCombat(mob);
                                         MobControlledData.markSystemAttack(mob);
@@ -470,8 +473,7 @@ public class MobControllerEvent {
     public static void onLivingChangeTargetEvent(LivingChangeTargetEvent event) {
         if (event.getEntity() instanceof Mob mob && event.getNewTarget() != null) {
             if (MobControlledData.isControlledEntity(mob)
-                && !MobControlledData.isSystemAttack(mob)
-                && !MobControlUtil.isEnemy(mob, event.getNewTarget())) {
+                && !MobControlUtil.canKeepCombatTarget(mob, event.getNewTarget())) {
                 if (!(mob instanceof EntityControlledWitch)) {
                     event.setCanceled(true);
                 }

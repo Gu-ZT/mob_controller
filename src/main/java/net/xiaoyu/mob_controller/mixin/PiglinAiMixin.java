@@ -30,17 +30,17 @@ public class PiglinAiMixin {
 
         Brain<Piglin> brain = piglin.getBrain();
         Optional<LivingEntity> angerTarget = BehaviorUtils.getLivingEntityFromUUIDMemory(piglin, MemoryModuleType.ANGRY_AT);
-        if (angerTarget.isPresent() && !MobControlUtil.isEnemy(piglin, angerTarget.get())) {
+        if (angerTarget.isPresent() && !MobControlUtil.canKeepCombatTarget(piglin, angerTarget.get())) {
             brain.eraseMemory(MemoryModuleType.ANGRY_AT);
         }
 
         Optional<? extends LivingEntity> attackTarget = brain.getMemory(MemoryModuleType.ATTACK_TARGET);
-        if (attackTarget.isPresent() && !MobControlUtil.isEnemy(piglin, attackTarget.get())) {
+        if (attackTarget.isPresent() && !MobControlUtil.canKeepCombatTarget(piglin, attackTarget.get())) {
             brain.eraseMemory(MemoryModuleType.ATTACK_TARGET);
         }
 
         Optional<? extends LivingEntity> nearestVisibleNemesis = brain.getMemory(MemoryModuleType.NEAREST_VISIBLE_NEMESIS);
-        if (nearestVisibleNemesis.isPresent() && !MobControlUtil.isEnemy(piglin, nearestVisibleNemesis.get())) {
+        if (nearestVisibleNemesis.isPresent() && !MobControlUtil.canKeepCombatTarget(piglin, nearestVisibleNemesis.get())) {
             brain.eraseMemory(MemoryModuleType.NEAREST_VISIBLE_NEMESIS);
         }
 
@@ -56,7 +56,7 @@ public class PiglinAiMixin {
         }
 
         Optional<? extends LivingEntity> result = cir.getReturnValue();
-        if (result.isPresent() && !MobControlUtil.isEnemy(piglin, result.get())) {
+        if (result.isPresent() && !MobControlUtil.canKeepCombatTarget(piglin, result.get())) {
             cir.setReturnValue(Optional.empty());
         }
     }

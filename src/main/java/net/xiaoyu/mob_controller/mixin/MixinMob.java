@@ -9,6 +9,7 @@ import net.minecraft.world.entity.monster.Guardian;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.entity.monster.hoglin.Hoglin;
 import net.minecraft.world.entity.monster.piglin.AbstractPiglin;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.xiaoyu.mob_controller.entity.IControllableEntity;
 import net.xiaoyu.mob_controller.util.MobControlUtil;
@@ -78,6 +79,12 @@ public abstract class MixinMob extends LivingEntity implements Targeting {
         Mob mob = (Mob) (Object) this;
 
         if (MobControlledData.isControlledEntity(mob)) {
+            if (target instanceof Player
+                && !MobControlUtil.canKeepCombatTarget(mob, target)) {
+                ci.cancel();
+                return;
+            }
+
             if (!MobControlledData.isSystemAttack(mob)) {
                 if (mob instanceof IControllableEntity controllable) {
                     if (!controllable.canSeeAsTarget(target)) {

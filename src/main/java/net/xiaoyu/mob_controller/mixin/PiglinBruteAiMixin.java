@@ -34,12 +34,12 @@ public class PiglinBruteAiMixin {
 
             // 清除不应继续敌对的记忆目标（玩家中立也在此覆盖）。
             Optional<LivingEntity> angerTarget = BehaviorUtils.getLivingEntityFromUUIDMemory(brute, MemoryModuleType.ANGRY_AT);
-            if (angerTarget.isPresent() && !MobControlUtil.isEnemy(brute, angerTarget.get())) {
+            if (angerTarget.isPresent() && !MobControlUtil.canKeepCombatTarget(brute, angerTarget.get())) {
                 brain.eraseMemory(MemoryModuleType.ANGRY_AT);
             }
 
             Optional<? extends LivingEntity> attackTarget = brain.getMemory(MemoryModuleType.ATTACK_TARGET);
-            if (attackTarget.isPresent() && !MobControlUtil.isEnemy(brute, attackTarget.get())) {
+            if (attackTarget.isPresent() && !MobControlUtil.canKeepCombatTarget(brute, attackTarget.get())) {
                 brain.eraseMemory(MemoryModuleType.ATTACK_TARGET);
             }
 
@@ -49,7 +49,7 @@ public class PiglinBruteAiMixin {
             }
 
             Optional<? extends LivingEntity> nearestVisibleNemesis = brain.getMemory(MemoryModuleType.NEAREST_VISIBLE_NEMESIS);
-            if (nearestVisibleNemesis.isPresent() && !MobControlUtil.isEnemy(brute, nearestVisibleNemesis.get())) {
+            if (nearestVisibleNemesis.isPresent() && !MobControlUtil.canKeepCombatTarget(brute, nearestVisibleNemesis.get())) {
                 brain.eraseMemory(MemoryModuleType.NEAREST_VISIBLE_NEMESIS);
             }
         }
@@ -63,7 +63,7 @@ public class PiglinBruteAiMixin {
         }
 
         Optional<? extends LivingEntity> result = cir.getReturnValue();
-        if (result.isPresent() && !MobControlUtil.isEnemy(brute, result.get())) {
+        if (result.isPresent() && !MobControlUtil.canKeepCombatTarget(brute, result.get())) {
             cir.setReturnValue(Optional.empty());
         }
     }
