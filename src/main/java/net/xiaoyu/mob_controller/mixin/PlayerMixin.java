@@ -51,6 +51,7 @@ abstract class PlayerMixin extends Entity {
         if (returnValue != InteractionResult.PASS && returnValue != InteractionResult.FAIL) return;
         Player player = (Player) (Object) this;
         // 手持生物控制器时不允许切换模式（控制器仅用于驯服，不负责指令）
+        if (player.getItemInHand(InteractionHand.MAIN_HAND).getItem() instanceof MobControllerItem) return;
         if (player.getItemInHand(hand).getItem() instanceof MobControllerItem) return;
         if (
             !MobControlledData.isControlledEntity(mob)
