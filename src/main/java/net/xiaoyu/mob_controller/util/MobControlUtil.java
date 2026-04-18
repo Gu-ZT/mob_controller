@@ -431,13 +431,42 @@ public class MobControlUtil {
     }
 
     /**
+     * 判定目标玩家是否可作为“主人指令攻击”的合法对象。
+     *
+     * <p>该逻辑仅用于主人主动攻击某玩家后，受控生物是否允许协同攻击的场景，
+     * 与护主/反击逻辑相互独立。</p>
+     */
+    public static boolean canAttackPlayerByOwnerCommand(LivingEntity controlledMob, @Nullable LivingEntity target) {
+        if (!(target instanceof Player player)) {
+            return false;
+        }
+        if (!MobControlledData.isControlledEntity(controlledMob)) {
+            return false;
+        }
+        if (!Config.CONTROLLED_MOBS_ATTACK_PLAYERS_ON_COMMAND.get()) {
+            return false;
+        }
+
+        UUID controllerUUID = MobControlledData.getControllerUUID(controlledMob);
+        return controllerUUID != null
+               && !controllerUUID.equals(player.getUUID())
+               && !player.isCreative()
+               && !player.isSpectator();
+    }
+
+    /**
      * 判定目标是否允许继续作为当前战斗目标。
      */
     public static boolean canKeepCombatTarget(LivingEntity controlledMob, @Nullable LivingEntity target) {
         return isEnemy(controlledMob, target)
-               || (controlledMob instanceof Mob mob
+               || (
+                   controlledMob instanceof Mob mob
                    && MobControlledData.isSystemAttack(mob)
-                   && canRetaliateAgainst(controlledMob, target));
+                   && (
+                       canRetaliateAgainst(controlledMob, target)
+                       || canAttackPlayerByOwnerCommand(controlledMob, target)
+                   )
+               );
     }
 
     /**

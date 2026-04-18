@@ -74,24 +74,24 @@ public abstract class MixinLivingEntity extends Entity {
         Entity attacker = source.getEntity();
 
         // 投射物
-         if (source.getDirectEntity() instanceof Projectile projectile) {
-             Entity projectileOwner = projectile.getOwner();
-             if (projectileOwner instanceof LivingEntity) {
-                 attacker = projectileOwner;
-             }
-         }
+        if (source.getDirectEntity() instanceof Projectile projectile) {
+            Entity projectileOwner = projectile.getOwner();
+            if (projectileOwner instanceof LivingEntity) {
+                attacker = projectileOwner;
+            }
+        }
 
-         // 一般情况下的攻击
-         if (attacker instanceof LivingEntity mob && MobControlledData.isControlledEntity(mob)) {
-             // 系统攻击（反击/护主）时允许伤害，否则检查敌友关系
-             if (mob instanceof Mob mobInstance) {
-                 if (!MobControlledData.isSystemAttack(mobInstance) && !MobControlUtil.isEnemy(mob, livingEntity)) {
-                     cir.cancel();
-                 }
-             } else if (!MobControlUtil.isEnemy(mob, livingEntity)) {
-                 cir.cancel();
-             }
-         }
+        // 一般情况下的攻击
+        if (attacker instanceof LivingEntity mob && MobControlledData.isControlledEntity(mob)) {
+            // 系统攻击（反击/护主）时允许伤害，否则检查敌友关系
+            if (mob instanceof Mob mobInstance) {
+                if (!MobControlledData.isSystemAttack(mobInstance) && !MobControlUtil.isEnemy(mob, livingEntity)) {
+                    cir.cancel();
+                }
+            } else if (!MobControlUtil.isEnemy(mob, livingEntity)) {
+                cir.cancel();
+            }
+        }
 
         // 其他生物受到被控制生物攻击的反击
         if (attacker instanceof LivingEntity controlledMob && MobControlledData.isControlledEntity(controlledMob)

@@ -7,6 +7,7 @@ import net.minecraft.world.entity.ai.goal.target.OwnerHurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.TargetGoal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.xiaoyu.mob_controller.entity.IControllableEntity;
+import net.xiaoyu.mob_controller.util.MobControlledData;
 
 import java.util.EnumSet;
 import javax.annotation.Nullable;
@@ -62,6 +63,7 @@ public class GoalOwnerHurtByTarget<T extends Mob & IControllableEntity> extends 
      */
     @Override
     public void start() {
+        MobControlledData.markSystemAttack(this.controllableEntity);
         this.mob.setTarget(this.ownerLastHurtBy);
         LivingEntity livingentity = this.controllableEntity.getOwner();
         if (livingentity != null) {

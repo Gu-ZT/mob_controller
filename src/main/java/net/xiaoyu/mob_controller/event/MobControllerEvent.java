@@ -49,7 +49,6 @@ import net.xiaoyu.mob_controller.entity.EntityControlledWitch;
 import net.xiaoyu.mob_controller.network.ApplyControlCommandPacket;
 import net.xiaoyu.mob_controller.network.MobControlCapabilitySyncPacket;
 import net.xiaoyu.mob_controller.network.NetWorkManager;
-import net.xiaoyu.mob_controller.network.ToggleControlModePacket;
 import net.xiaoyu.mob_controller.registry.ModItems;
 import net.xiaoyu.mob_controller.util.MobControlUtil;
 import net.xiaoyu.mob_controller.util.MobControlledData;
@@ -319,10 +318,11 @@ public class MobControllerEvent {
                             if (controllerUUID != null && controllerUUID.equals(player.getUUID())) {
                                 if (event.getEntity() instanceof LivingEntity) {
                                     LivingEntity target = event.getEntity();
-                                    boolean isPlayer = target instanceof Player;
-
-                                    if (!mob.equals(target) && mob.getTarget() == null && !isPlayer) {
-                                        if (!MobControlUtil.isEnemy(mob, target)) {
+                                    if (!mob.equals(target) && mob.getTarget() == null) {
+                                        boolean canAttackTarget = target instanceof Player
+                                                                  ? MobControlUtil.canAttackPlayerByOwnerCommand(mob, target)
+                                                                  : MobControlUtil.isEnemy(mob, target);
+                                        if (!canAttackTarget) {
                                             continue;
                                         }
 

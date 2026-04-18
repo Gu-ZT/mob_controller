@@ -81,6 +81,16 @@ public class Config {
         .define("always_success", false);
 
     /**
+     * 被控制生物是否会听从主人的指令去攻击其他玩家。
+     *
+     * <p>该配置仅影响“主人主动攻击玩家后，受控生物是否协同攻击”的行为，
+     * 不影响主人/受控生物遭到其他玩家攻击时的防御反击逻辑。默认值为 {@code true}。</p>
+     */
+    public static final ForgeConfigSpec.BooleanValue CONTROLLED_MOBS_ATTACK_PLAYERS_ON_COMMAND = BUILDER
+        .comment("Whether controlled mobs obey their owner's attack command against other players")
+        .define("controlled_mobs_attack_players_on_command", true);
+
+    /**
      * 受控生物在脱战后开始自动回血前需要等待的 tick 数。
      *
      * <p>默认值为 {@code 100}（5 秒）。设为 {@code 0} 表示一旦没有有效战斗目标就可立即开始回血。</p>
@@ -110,7 +120,9 @@ public class Config {
      * 设为 {@code false} 时，仅最大体型（size >= 3）可进入延迟重生队列。</p>
      */
     public static final ForgeConfigSpec.BooleanValue SLIME_RESPAWN_ONLY_MIN_SIZE = BUILDER
-        .comment("If true, only smallest slimes (size == 1) can schedule respawn; if false, only largest slime sizes (size >= 3) can schedule respawn")
+        .comment(
+            "If true, only smallest slimes (size == 1) can schedule respawn; if false, only largest slime sizes (size >= 3) can schedule respawn"
+        )
         .define("slime_respawn_only_min_size", true);
 
     /**
