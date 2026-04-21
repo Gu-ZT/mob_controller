@@ -17,28 +17,14 @@ import java.util.function.Supplier;
  * <p>用于请求切换某个已被玩家控制生物的模式（跟随/停留/游荡）。</p>
  */
 
-public class ToggleControlModePacket {
-    /**
-     * 目标生物实体 ID。
-     */
-    private final int entityId;
-
-    /**
-     * 使用目标实体 ID 构造数据包。
-     *
-     * @param entityId 目标生物实体 ID
-     */
-    public ToggleControlModePacket(int entityId) {
-        this.entityId = entityId;
-    }
-
+public record ToggleControlModePacket(int entityId) {
     /**
      * 从网络缓冲区反序列化数据包。
      *
      * @param buf 网络字节缓冲
      */
     public ToggleControlModePacket(FriendlyByteBuf buf) {
-        this.entityId = buf.readInt();
+        this(buf.readInt());
     }
 
     /**
@@ -47,7 +33,7 @@ public class ToggleControlModePacket {
      * @param buf 网络字节缓冲
      */
     public void toBytes(FriendlyByteBuf buf) {
-        buf.writeInt(this.entityId);
+        buf.writeInt(this.entityId());
     }
 
     /**
@@ -61,7 +47,7 @@ public class ToggleControlModePacket {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
 
-            if (player != null && player.level().getEntity(this.entityId) instanceof Mob mob) {
+            if (player != null && player.level().getEntity(this.entityId()) instanceof Mob mob) {
                 if (MobControlledData.isControlledEntity(mob) && Objects.equals(
                     MobControlledData.getControllerUUID(mob),
                     player.getUUID()

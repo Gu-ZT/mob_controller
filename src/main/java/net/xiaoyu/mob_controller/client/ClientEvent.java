@@ -20,7 +20,7 @@ import net.xiaoyu.mob_controller.registry.ModMenuType;
  */
 
 @OnlyIn(Dist.CLIENT)
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ClientEvent {
     /**
      * 客户端初始化阶段注册菜单界面。
