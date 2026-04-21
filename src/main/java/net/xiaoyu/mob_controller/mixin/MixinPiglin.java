@@ -44,7 +44,7 @@ public abstract class MixinPiglin extends AbstractPiglin implements CrossbowAtta
      */
     @Inject(method = "performRangedAttack(Lnet/minecraft/world/entity/LivingEntity;F)V", at = @At("HEAD"), cancellable = true)
     private void injectPerformRangedAttack(LivingEntity target, float distanceFactor, CallbackInfo ci) {
-        if (MobControlledData.isControlledEntity(this) && !MobControlUtil.isEnemy(this, target)) {
+        if (MobControlledData.isControlledEntity(this) && !MobControlUtil.canKeepCombatTarget(this, target)) {
             this.setTarget(null);
 
             Vec3 vec3 = target.getDeltaMovement();
@@ -88,7 +88,7 @@ public abstract class MixinPiglin extends AbstractPiglin implements CrossbowAtta
             LivingEntity target = this.level().getNearestEntity(
                 this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(followRange, 4, followRange), t -> true),
                 TargetingConditions.forNonCombat().range(followRange)
-                    .selector(livingEntity -> !MobControlUtil.isEnemy(this, livingEntity)),
+                    .selector(livingEntity -> !MobControlUtil.canKeepCombatTarget(this, livingEntity)),
                 this, this.getX(), this.getEyeY(), this.getZ()
             );
 

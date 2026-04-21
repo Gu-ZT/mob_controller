@@ -8,6 +8,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.sensing.PiglinSpecificSensor;
+import net.xiaoyu.mob_controller.util.MobControlUtil;
 import net.xiaoyu.mob_controller.util.MobControlledData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -39,10 +40,11 @@ public abstract class MixinPiglinSpecificSensor {
         Operation<Void> original,
         @Local(argsOnly = true) LivingEntity entity
     ) {
-        if (memoryType.equals(MemoryModuleType.NEAREST_VISIBLE_NEMESIS) && MobControlledData.isControlledEntity(entity)) {
-            if (memory.isPresent()) {
-                memory = Optional.empty();
-            }
+        if (memoryType.equals(MemoryModuleType.NEAREST_VISIBLE_NEMESIS)
+            && MobControlledData.isControlledEntity(entity)
+            && memory.isPresent()
+            && !MobControlUtil.canKeepCombatTarget(entity, memory.get())) {
+            memory = Optional.empty();
         }
         original.call(instance, memoryType, memory);
     }

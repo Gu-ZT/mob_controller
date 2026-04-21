@@ -38,10 +38,9 @@ public abstract class MixinNearestAttackableTargetGoal {
         Operation<TargetingConditions> original, @Local(argsOnly = true) Mob mob
     ) {
         Predicate<LivingEntity> predicate = customPredicate != null ? customPredicate : livingEntity -> true;
-        predicate = predicate.and(livingEntity -> !MobControlledData.isControlledEntity(mob) || !MobControlUtil.isEnemy(
-            mob,
-            livingEntity
-        ) || (mob instanceof EntityControlledWitch));
+        predicate = predicate.and(livingEntity -> !MobControlledData.isControlledEntity(mob)
+                                                || (mob instanceof EntityControlledWitch)
+                                                || MobControlUtil.canKeepCombatTarget(mob, livingEntity));
         return original.call(instance, predicate);
     }
 }

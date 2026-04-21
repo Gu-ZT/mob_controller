@@ -50,10 +50,9 @@ public abstract class MixinLivingEntity extends Entity {
     private void injectCanAttack(LivingEntity target, CallbackInfoReturnable<Boolean> cir) {
         if (cir.getReturnValue()) {
             if ((Object) (this) instanceof LivingEntity mob) {
-                if (MobControlledData.isControlledEntity(mob) && MobControlUtil.isEnemy(
-                    mob,
-                    target
-                ) && !(mob instanceof EntityControlledWitch)) {
+                if (MobControlledData.isControlledEntity(mob)
+                    && !MobControlUtil.canKeepCombatTarget(mob, target)
+                    && !(mob instanceof EntityControlledWitch)) {
                     cir.cancel();
                 }
             }

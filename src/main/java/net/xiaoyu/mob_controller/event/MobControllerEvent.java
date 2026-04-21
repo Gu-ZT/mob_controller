@@ -218,7 +218,7 @@ public class MobControllerEvent {
                         MobControlledData.markSystemAttack(mob);
 
                         // 疣猪兽/僵尸疣猪兽用ATTACK_TARGET内存模块
-                        if (mob instanceof Hoglin/*  || mob instanceof Zoglin */) {
+                        if (mob instanceof Hoglin || mob instanceof Zoglin) {
                             Brain<?> brain = mob.getBrain();
                             brain.eraseMemory(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
                             brain.setMemoryWithExpiry(MemoryModuleType.ATTACK_TARGET, attacker, Long.MAX_VALUE);
@@ -272,7 +272,7 @@ public class MobControllerEvent {
                                         MobControlledData.markSystemAttack(mob);
 
                                         // 疣猪兽/僵尸疣猪兽用ATTACK_TARGET内存模块
-                                        if (mob instanceof Hoglin/*  || mob instanceof Zoglin */) {
+                                        if (mob instanceof Hoglin || mob instanceof Zoglin) {
                                             Brain<?> brain = mob.getBrain();
                                             brain.eraseMemory(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
                                             brain.setMemoryWithExpiry(MemoryModuleType.ATTACK_TARGET, attacker, Long.MAX_VALUE);
@@ -313,7 +313,9 @@ public class MobControllerEvent {
                             if (controllerUUID != null && controllerUUID.equals(player.getUUID())) {
                                 if (event.getEntity() instanceof LivingEntity) {
                                     LivingEntity target = event.getEntity();
-                                    if (!mob.equals(target) && mob.getTarget() == null) {
+                                    LivingEntity currentTarget = mob.getTarget();
+                                    if (!mob.equals(target)
+                                        && (currentTarget == null || !MobControlUtil.canKeepCombatTarget(mob, currentTarget))) {
                                         boolean canAttackTarget = target instanceof Player
                                                                   ? MobControlUtil.canAttackPlayerByOwnerCommand(mob, target)
                                                                   : MobControlUtil.isEnemy(mob, target);
@@ -378,7 +380,8 @@ public class MobControllerEvent {
                         mob.setTarget(null);
                     }
 
-                    if (MobControlledData.isSystemAttack(mob)) {
+                    // Brain 类生物可能仅通过 ATTACK_TARGET 维持战斗，不应因 setTarget 为空而提前脱战。
+                    if (MobControlledData.isSystemAttack(mob) && !hasValidCombatTarget(mob)) {
                         MobControlledData.clearSystemAttack(mob);
                     }
                 }

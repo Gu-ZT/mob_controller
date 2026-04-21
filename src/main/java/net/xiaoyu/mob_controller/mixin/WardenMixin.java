@@ -84,13 +84,13 @@ public class WardenMixin {
         }
 
         LivingEntity currentTarget = warden.getTarget();
-        if (currentTarget != null && !MobControlUtil.isEnemy(warden, currentTarget)) {
+        if (currentTarget != null && !MobControlUtil.canKeepCombatTarget(warden, currentTarget)) {
             warden.setTarget(null);
             warden.clearAnger(currentTarget);
         }
 
         Optional<LivingEntity> currentAngryTarget = warden.getEntityAngryAt();
-        if (currentAngryTarget.isPresent() && !MobControlUtil.isEnemy(warden, currentAngryTarget.get())) {
+        if (currentAngryTarget.isPresent() && !MobControlUtil.canKeepCombatTarget(warden, currentAngryTarget.get())) {
             warden.clearAnger(currentAngryTarget.get());
         }
 
@@ -104,7 +104,7 @@ public class WardenMixin {
             angryTarget = Optional.of(livingTarget);
         }
 
-        if (angryTarget.isPresent() && angryTarget.get() instanceof Player player && MobControlUtil.isEnemy(warden, player)) {
+        if (angryTarget.isPresent() && angryTarget.get() instanceof Player player && MobControlUtil.canKeepCombatTarget(warden, player)) {
             MobEffectInstance darkness = new MobEffectInstance(MobEffects.DARKNESS, CONTROLLED_WARDEN_DARKNESS_DURATION, 0, false, false);
             if (!player.hasEffect(MobEffects.DARKNESS)
                 || Objects.requireNonNull(player.getEffect(MobEffects.DARKNESS)).endsWithin(CONTROLLED_WARDEN_DARKNESS_REFRESH_MARGIN)) {

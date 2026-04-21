@@ -37,7 +37,7 @@ public abstract class MixinEntity implements Nameable, EntityAccess, CommandSour
                 cir.setReturnValue(true);
             } else if (LivingEntity.class.isInstance(this)) {
                 LivingEntity mob = (LivingEntity) (Object) this;
-                if (MobControlledData.isControlledEntity(mob) && !MobControlUtil.isEnemy(
+                if (MobControlledData.isControlledEntity(mob) && !MobControlUtil.canKeepCombatTarget(
                     mob,
                     livingEntity
                 ) && !(mob instanceof EntityControlledWitch)) {
