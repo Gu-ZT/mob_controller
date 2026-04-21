@@ -28,6 +28,12 @@ public class MixinZoglin {
         Zoglin zoglin = (Zoglin) (Object) this;
 
         if (MobControlledData.isControlledEntity(zoglin)) {
+            // 默认中立：仅在系统攻击（护主/反击/主人指令）期间允许造成伤害。
+            if (!MobControlledData.isSystemAttack(zoglin)) {
+                cir.setReturnValue(false);
+                return;
+            }
+
             if (target instanceof Player) {
                 if (target.getUUID().equals(MobControlledData.getControllerUUID(zoglin))) {
                     cir.cancel();
@@ -44,7 +50,10 @@ public class MixinZoglin {
         Zoglin zoglin = (Zoglin) (Object) this;
         if (MobControlledData.isControlledEntity(zoglin)) {
             Optional<? extends LivingEntity> result = cir.getReturnValue();
-            if (result.isPresent() && MobControlUtil.isController(zoglin, result.get())) {
+            if (result.isPresent()
+                && (!MobControlledData.isSystemAttack(zoglin)
+                    || !MobControlUtil.canKeepCombatTarget(zoglin, result.get())
+                    || MobControlUtil.isController(zoglin, result.get()))) {
                 cir.setReturnValue(Optional.empty());
             }
         }
