@@ -185,7 +185,7 @@ public class MobControllerItem extends Item {
                     mob.setTarget(null);
                     // 控制成功
                     controlMob(player, mob);
-                    MobControlUtil.showMessageToPlayer(player, mob.getDisplayName().getString(), "mob_controller.mode.follow", new Object[]{}, ChatFormatting.GOLD);
+                    MobControlUtil.showMessageToPlayer(player, mob.getDisplayName(), "mob_controller.mode.follow", new Object[]{}, ChatFormatting.GOLD);
                     spawnParticles(mob, true);
                     return InteractionResult.SUCCESS;
                 } else {

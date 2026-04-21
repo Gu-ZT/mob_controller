@@ -3,9 +3,9 @@ package net.xiaoyu.mob_controller.util;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.locale.Language;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
@@ -18,14 +18,14 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.ambient.Bat;
-import net.minecraft.world.entity.animal.Squid;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.Dolphin;
 import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.entity.animal.Squid;
 import net.minecraft.world.entity.monster.Blaze;
 import net.minecraft.world.entity.monster.Ghast;
-import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.entity.monster.Guardian;
+import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.entity.monster.Ravager;
 import net.minecraft.world.entity.monster.Vex;
 import net.minecraft.world.entity.monster.Zoglin;
@@ -528,15 +528,15 @@ public class MobControlUtil {
      * @param args           格式化参数
      * @param color          文本颜色
      */
-    public static void showMessageToPlayer(Player player, String prefix, String translationKey, Object[] args, ChatFormatting color) {
+    public static void showMessageToPlayer(Player player, Component prefix, String translationKey, Object[] args, ChatFormatting color) {
         if (player instanceof ServerPlayer serverPlayer) {
-            String text = Language.getInstance().getOrDefault(translationKey);
-            String formattedText = args.length > 0 ? String.format(text, args) : text;
-
-            String messageText = !prefix.isEmpty() ? prefix + " " + formattedText : formattedText;
-
-            Component message = Component.literal(messageText).setStyle(Style.EMPTY.withColor(color));
-
+            MutableComponent message;
+            if (!prefix.toString().isEmpty()) {
+                message = Component.translatable("mob_controller.message.connection", prefix, Component.translatable(translationKey, args));
+            } else {
+                message = Component.translatable(translationKey, args);
+            }
+            message.setStyle(Style.EMPTY.withColor(color));
             serverPlayer.sendSystemMessage(message, true);
         }
     }

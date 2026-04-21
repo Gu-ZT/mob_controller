@@ -58,10 +58,9 @@ public record ToggleControlModePacket(int entityId) {
 
                     MobControlledData.ControlMode newMode = MobControlledData.toggleControlMode(mob);
 
-                    String mobName = mob.getDisplayName().getString();
                     String modeKey = "mob_controller.mode." + newMode.toString().toLowerCase();
 
-                    MobControlUtil.showMessageToPlayer(player, mobName, modeKey, new Object[]{}, ChatFormatting.GOLD);
+                    MobControlUtil.showMessageToPlayer(player, mob.getDisplayName(), modeKey, new Object[]{}, ChatFormatting.GOLD);
                 }
             }
         });

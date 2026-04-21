@@ -2,6 +2,7 @@ package net.xiaoyu.mob_controller.network;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 import net.xiaoyu.mob_controller.item.MobControllerItem;
@@ -52,7 +53,13 @@ public record ApplyControlCommandPacket(MobControlledData.ControlMode mode) {
 
             int affectedCount = MobControllerItem.applyControlCommand(player, this.mode());
             String modeKey = "mob_controller.mode." + this.mode().toString().toLowerCase();
-            MobControlUtil.showMessageToPlayer(player, "[" + affectedCount + "]", modeKey, new Object[]{}, ChatFormatting.GOLD);
+            MobControlUtil.showMessageToPlayer(
+                player,
+                Component.literal("[" + affectedCount + "]"),
+                modeKey,
+                new Object[]{},
+                ChatFormatting.GOLD
+            );
         });
         ctx.get().setPacketHandled(true);
     }
